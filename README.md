@@ -1,55 +1,39 @@
-# hl_event_server
+# Лабораторная работа №1 #
+Студент: Винников Алексей
 
-## install C++
-sudo apt-get install gcc g++ cmake git libssl-dev zlib1g-dev librdkafka-dev mysql-server mysql-client libmysqlclient-dev libboost-all-dev
+Группа: М8О-103М-20
+## Установка необходимых компонентов ##
+[Описана здесь](https://github.com/DVDemon/hl_mai_lab_01/blob/master/README.md)
 
-## install java
+## Сборка проекта ##
+```bash
+$ cmake --build CMakeFiles --target hl_mai_lab_01 -- -j 3 
+```
+## Подготовка перед запском ##
+Перед запуском необходимо создать БД и пользователя с доступом к ней. Для этого необходимо выполнить команды в файле commands.sql (Строки 1-15).
+Также возможно заполнение БД сгенерированными данными в том же файле: строки 13,14.
 
-sudo apt install openjdk-8-jdk
+## Запуск ##
+```bash
+$ sudo sh ./start.sh
+```
+## Тестирование ##
+Перед началом тестирования необходимо создать отдельную БД с коппией всех оригинальных таблиц, для этого необходимо выполнить все комманды в файле commands_test.sql.
 
-sudo apt install openjdk-8-jre
+После чего необходимо собрать выполняемый файл для тестов, выполним следющую комманду:
+```bash
+$ cmake --build CMakeFiles --target gtests -- -j 3
+```
+Запус тестов запускается так:
+```bash
+$ ./CMakeFiles/gtests
+```
+## Нагрузочное тестирование ##
+Нагрузочное тестирование осуществлялось с помощью утилиты wrk. В зависимости от числа потоков количество ответов в секуду и задержка менялись следующим образом:
 
-## install iginte
-
-Download from https://ignite.apache.org/download.cgi#binaries
-
-build platforms/cpp
-
-## install CPPRDKafkfa
-
-
-// https://github.com/edenhill/librdkafka
-https://github.com/mfontanini/cppkafka
-mkdir build
-cd build
-cmake <OPTIONS> ..
-make
-make install
-
-
-## Install poco
-
-git clone -b master https://github.com/pocoproject/poco.git
-
-cd poco
-
-mkdir cmake-build
-
-cd cmake-build
-
-cmake ..
-
-cmake --build . --config Release
-
-sudo cmake --build . --target install
-
-## Install gtest
-sudo apt-get install libgtest-dev
-
-cd /usr/src/gtest/
-
-sudo cmake -DBUILD_SHARED_LIBS=ON
-
-sudo make
-
-sudo cp *.so /usr/lib
+Threads | Req/sec | Latency(ms)
+--- | --- | ---
+1 | 275.05 | 57.55
+2 | 267.08 | 59.73
+6 | 254.59 | 85.23
+10 | 256.86 | 128.93
