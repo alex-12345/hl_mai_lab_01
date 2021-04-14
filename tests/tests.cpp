@@ -1,19 +1,12 @@
 #include <gtest/gtest.h>
-#include "config/config.h"
-#include "database/database.h"
-#include "database/person.h"
-//#include "web_server/http_request_factory.h"
-//#include "web_server/handlers/person_handler.h"
+#include "../config/config.h"
+#include "../database/database.h"
+#include "../database/person.h"
 #include <Poco/Data/SessionFactory.h>
-//#include "Poco/Net/HTTPServerRequestImpl.h"
-//#include "Poco/Net/SocketAddress.h"
 
 using Poco::Data::Session;
 using Poco::Data::Statement;
 using namespace Poco::Data::Keywords;
-//using Poco::Net::HTTPServerRequestImpl;
-//using Poco::Net::SocketAddress;
-//using Poco::Net::HTTPServerResponse;
 
 class TestApp : public ::testing::Test {
 protected:
@@ -36,27 +29,6 @@ protected:
 
 protected:
 };
-
-//class TestServerRequest : public HTTPServerRequest
-//{
-//    TestServerRequest();
-//    ~TestServerRequest();
-//    std::istream& stream();
-//
-//    const SocketAddress& clientAddress() {}const;
-//    const SocketAddress& serverAddress() {} const;
-//    const HTTPServerParams& serverParams() const;
-//    HTTPServerResponse& response() const;
-//    bool secure() const;
-//};
-
-//TEST(TestApp, FunctionalTest) {
-//    HTTPRequestFactory requestFactory("");
-//    HTTPServerRequestImpl httpServerRequest(HTTPRequest::HTTP_GET, "http://localhost:8080/person?login=alex-12345", HTTPRequest::HTTP_1_1);
-//    TestServerRequest request();
-//    HTTPRequestHandler* requestHandler = requestFactory.createRequestHandler(request);
-//    ASSERT_TRUE(true);
-//}
 
 TEST_F(TestApp, TestPerson) {
 

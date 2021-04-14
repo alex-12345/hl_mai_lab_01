@@ -51,7 +51,7 @@ using Poco::Util::ServerApplication;
 
 
 #include "../../database/person.h"
-
+//#include "stdio.h"
 class PersonHandler : public HTTPRequestHandler
 {
 private:
@@ -103,10 +103,28 @@ public:
         std::ostream &ostr = response.send();
 
         if(request.getMethod() == HTTPRequest::HTTP_GET) {
+            bool no_cache = false;
             if (form.has("login")) {
+                if (form.has("no_cache"))
+                    no_cache = true;
+
                 std::string login = form.get("login");
+                if (!no_cache)
+                {
+                    try
+                    {
+                        database::Person result = database::Person::read_from_cache_by_login(login);
+//                        printf("cache hit\n");
+                        Poco::JSON::Stringifier::stringify(result.toJSON(), ostr);
+                        return;
+                    }
+                    catch (...)
+                    {
+                    }
+                }
                 try {
                     database::Person result = database::Person::read_by_login(login);
+                    result.save_to_cache();
                     Poco::JSON::Stringifier::stringify(result.toJSON(), ostr);
                     return;
                 }
@@ -180,6 +198,7 @@ public:
                                 try
                                 {
                                     person.save_to_mysql();
+                                    person.save_to_cache();
                                     ostr << "{ \"result\": true }";
                                     return;
                                 }
