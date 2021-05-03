@@ -12,11 +12,11 @@ services:
     ports:
       - "10900:10800"
 
-  db-node-1:
+  db-node-test-1:
     build:
       context: infrastructure/docker/mysql
       dockerfile: Dockerfile
-    container_name: db-node-1
+    container_name: db-node-test-1
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: sql_test
@@ -30,15 +30,15 @@ services:
     networks:
       - mai-network
     ports:
-      - 3360:3306
+      - 3370:3306
     volumes:
-      - db-node-1-data:/var/lib/mysql
+      - db-node-1-test-data:/var/lib/mysql
 
-  db-node-2:
+  db-node-test-2:
     build:
       context: infrastructure/docker/mysql
       dockerfile: Dockerfile
-    container_name: db-node-2
+    container_name: db-node-test-2
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: sql_test
@@ -52,15 +52,15 @@ services:
     networks:
       - mai-network
     ports:
-      - 3361:3306
+      - 3371:3306
     volumes:
-      - db-node-2-data:/var/lib/mysql
+      - db-node-2-test-data:/var/lib/mysql
 
-  db-node-3:
+  db-node-test-3:
     build:
       context: ./infrastructure/docker/mysql
       dockerfile: Dockerfile
-    container_name: db-node-3
+    container_name: db-node-test-3
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: sql_test
@@ -74,32 +74,32 @@ services:
     networks:
       - mai-network
     ports:
-      - 3362:3306
+      - 3372:3306
     volumes:
-      - db-node-3-data:/var/lib/mysql
+      - db-node-3-test-data:/var/lib/mysql
 
-  proxysql:
+  proxysql-test:
     build:
       context: ./infrastructure/docker/proxysql
-      dockerfile: Dockerfile
-    container_name: proxysql
+      dockerfile: Dockerfile-test
+    container_name: proxysql-test
     command: >
       --initial
     volumes:
-      - proxysql-data:/var/lib/proxysql
+      - proxysql-test-data:/var/lib/proxysql
     networks:
       - mai-network
     ports:
       # Mysql Client Port
-      - "6033:6033"
+      - "6043:6043"
       # Mysql Admin Port
-      - "6032:6032"
+      - "6042:6042"
 
 volumes:
-  db-node-1-data:
-  db-node-2-data:
-  db-node-3-data:
-  proxysql-data:
+  db-node-1-test-data:
+  db-node-2-test-data:
+  db-node-3-test-data:
+  proxysql-test-data:
 
 networks:
   mai-network:

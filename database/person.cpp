@@ -101,8 +101,12 @@ namespace database
         {
             Poco::Data::Session session = database::Database::get().create_session();
             Poco::Data::Statement select(session);
+            std::string sql_request = "SELECT id, login, first_name, last_name, age FROM Person where login=? ";
+            sql_request += database::Database::sharding_hint(login, 3);
+            std::cout << sql_request << std::endl;
+
             Person p;
-            select << "SELECT id, login, first_name, last_name, age FROM Person where login=?",
+            select << sql_request,
                     into(p._id),
                     into(p._login),
                     into(p._first_name),
@@ -149,21 +153,29 @@ namespace database
         try
         {
             Poco::Data::Session session = database::Database::get().create_session();
-            Statement select(session);
             std::vector<Person> result;
-            Person p;
-            select << "SELECT id, login, first_name, last_name, age FROM Person",
-                    into(p._id),
-                    into(p._login),
-                    into(p._first_name),
-                    into(p._last_name),
-                    into(p._age),
-                    range(0, 1); //  iterate over result set one row at a time
 
-            while (!select.done())
-            {
-                select.execute();
-                result.push_back(p);
+            std::string sql_request = "SELECT id, login, first_name, last_name, age FROM Person ";
+            std::string sql_request_to_shard;
+            int max_shard = 3;
+            for(int i=0; i < max_shard; i++) {
+            	Statement select(session);
+                sql_request_to_shard = sql_request + " -- sharding:" + std::to_string(i);
+                Person p;
+                select << sql_request_to_shard,
+                        into(p._id),
+                        into(p._login),
+                        into(p._first_name),
+                        into(p._last_name),
+                        into(p._age),
+                        range(0, 1); //  iterate over result set one row at a time
+
+                while (!select.done()) {
+                    select.execute();
+                    if(!std::empty(p._login))
+                    	result.push_back(p);
+                }
+                std::cout << sql_request_to_shard << std::endl;
             }
             return result;
         }
@@ -186,25 +198,33 @@ namespace database
         try
         {
             Poco::Data::Session session = database::Database::get().create_session();
-            Statement select(session);
             std::vector<Person> result;
-            Person p;
-            first_name+="%";
-            last_name+="%";
-            select << "SELECT id, login, first_name, last_name, age FROM Person WHERE first_name LIKE ? and last_name LIKE ?",
-                    into(p._id),
-                    into(p._login),
-                    into(p._first_name),
-                    into(p._last_name),
-                    into(p._age),
-                    use(first_name),
-                    use(last_name),
-                    range(0, 1); //  iterate over result set one row at a time
+            first_name += "%";
+            last_name += "%";
+            std::string sql_request = "SELECT id, login, first_name, last_name, age FROM Person WHERE first_name LIKE ? and last_name LIKE ? ";
+            std::string sql_request_to_shard;
+            int max_shard = 3;
+            for(int i=0; i < max_shard; i++) {
+            	Statement select(session);
+                sql_request_to_shard = sql_request + " -- sharding:" + std::to_string(i);
+                Person p;
+                select
+                        << sql_request_to_shard,
+                        into(p._id),
+                        into(p._login),
+                        into(p._first_name),
+                        into(p._last_name),
+                        into(p._age),
+                        use(first_name),
+                        use(last_name),
+                        range(0, 1); //  iterate over result set one row at a time
 
-            while (!select.done())
-            {
-                select.execute();
-                result.push_back(p);
+                while (!select.done()) {
+                    select.execute();
+                    if(!std::empty(p._login))
+                    	result.push_back(p);
+                }
+                std::cout << sql_request_to_shard << std::endl;
             }
             return result;
         }
@@ -230,19 +250,23 @@ namespace database
             Poco::Data::Session session = database::Database::get().create_session();
             Poco::Data::Statement insert(session);
 
-            insert << "INSERT INTO Person (login, first_name, last_name, age) VALUES(?, ?, ?, ?)",
+            std::string sql_request = "INSERT INTO Person (login, first_name, last_name, age) VALUES(?, ?, ?, ?) ";
+            sql_request += database::Database::sharding_hint(_login, 3);
+            std::cout << sql_request << std::endl;
+
+            insert << sql_request,
                     use(_login),
                     use(_first_name),
                     use(_last_name),
                     use(_age),
                     now;
 
-            Poco::Data::Statement select(session);
-            select << "SELECT LAST_INSERT_ID()",
-                    into(_id),
-                    range(0, 1); //  iterate over result set one row at a time
-            select.execute();
-            std::cout << "inserted:" << _id << std::endl;
+            // Poco::Data::Statement select(session);
+            // select << "SELECT LAST_INSERT_ID()",
+            //        into(_id),
+            //        range(0, 1); //  iterate over result set one row at a time
+            // select.execute();
+            // std::cout << "inserted:" << _id << std::endl;
         }
         catch (Poco::Data::MySQL::ConnectionException &e)
         {

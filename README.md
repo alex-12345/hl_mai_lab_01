@@ -1,4 +1,4 @@
-# Лабораторные работы №1-2 #
+# Лабораторная работа №3 #
 Студент: Винников Алексей
 
 Группа: М8О-103М-20
@@ -9,28 +9,57 @@
 ```bash
 $ cmake --build CMakeFiles --target hl_mai_lab_01 -- -j 3 
 ```
-## Подготовка перед запском ##
-Перед запуском необходимо создать БД и пользователя с доступом к ней. Для этого необходимо в директории `infrastructure/db_prepare` выполнить команды в файле `commands.sql` (Строки 1-15).
-Также возможно заполнение БД сгенерированными данными в том же файле: строки 13,14.
-
-## Запуск ##
+## Запуск необходимых конейнеров ##
 ```bash
 $ docker-compose up -d
+```
+## Создание базы данных во всех шардах ##
+
+```bash
+$ mysql -utest -ppzjqUkMnc7vfNHET -h 127.0.0.1 -P6033 --comments
+mysql> source infrastructure/db_prepare/init.sql;
+mysql> exit; 
+```
+## Заполнение шардов сгенерированными данными ##
+### Разделение сгенерированных данных по шардам согласно внутреней логике ##
+В итоге получим файл infrastructure/db_prepare/sharded_gen_data100k.sql
+```bash
+$ cmake --build CMakeFiles --target gen_data -- -j 3 && ./CMakeFiles/gen_data
+```
+### Загрузка сгенерированных данные по шардам ###
+```bash
+$ mysql -utest -ppzjqUkMnc7vfNHET -h 127.0.0.1 -P6033 --comments
+mysql> source infrastructure/db_prepare/sharded_gen_data100k.sql;
+mysql> exit
+```
+## Запуск приложения ##
+```bash
 $ sudo sh ./start.sh
 ```
-## Тестирование ##
-Перед началом тестирования необходимо создать отдельную БД с коппией всех оригинальных таблиц, для этого необходимо выполнить в директории `infrastructure/db_prepare` все комманды в файле `commands_test.sql`.
+## Отключение конейнеров ##
+```bash
+$ docker-compose stop
+```
 
-После чего необходимо собрать выполняемый файл для тестов, выполним следющую комманду:
+## Модульное тестирование ##
+### Запуск отдельное окружение для тестирования и инициализация шардов ###
 ```bash
-$ cmake --build CMakeFiles --target gtests -- -j 3
+$ docker-compose -f docker-compose-test.yaml up -d
+$ mysql -utest -ppzjqUkMnc7vfNHET -h 127.0.0.1 -6043 --comments
+mysql> source infrastructure/db_prepare/init.sql;
+mysql> exit; 
 ```
-Запус тестов запускается так:
+### Компиляция и запуск тестов ###
 ```bash
-$ ./CMakeFiles/gtests
+$ cmake --build CMakeFiles --target gtests -- -j 3 && ./CMakeFiles/gtests 
 ```
+### Выключение тестового окружения ###
+```bash
+$ docker-compose -f docker-compose-test.yaml stop
+```
+
 ## Нагрузочное тестирование ##
-Нагрузочное тестирование осуществлялось с помощью утилиты wrk. 
+Нагрузочное тестирование осуществлялось с помощью утилиты wrk. Комплексное нагрузочное тестирование не входило в задание лабораторной, тем не менее очевидно что при тестировании нагрузки на получение одного конкретного значения, оно попадет в кэш apache ignite и результат тестирования буде практически аналогичным что и в лабораторной работе №2
 
 ```bash
 $ wrk -t $Threads -c100 -d30s http://localhost:8080/person\?login\=166-06-8645
@@ -40,18 +69,27 @@ $ wrk -t $Threads -c100 -d30s http://localhost:8080/person\?login\=166-06-8645
 
 В зависимости от числа потоков количество ответов в секуду и задержка менялись следующим образом:
 
-**С использованием Apache Ignite**
 Threads | Req/sec | Latency(ms)
 --- | --- | ---
-1 | 2107.20 | 6.91
-2 | 1686.41 | 9.11
-6 | 1728.89 | 9.15
-10 | 1570.69 | 10.16
+1 | 2358.97 | 11.92
+2 | 3259.86 | 4.69
+6 | 2968.89 | 5.34
+10 | 2764.17 | 5.76
 
-**Без использования Apache Ignite (ЛР №1)**
-Threads | Req/sec | Latency(ms)
---- | --- | ---
-1 | 275.05 | 57.55
-2 | 267.08 | 59.73
-6 | 254.59 | 85.23
-10 | 256.86 | 128.93
+## Точки входа ##
+Добавление пользователя
+```bash
+$ curl -d "login=alex-12345&last_name=Vinnilov&first_name=Alexey&age=22" -X POST http://localhost:8080/person
+```
+Получение всех пользователей
+```bash
+curl -X GET http://localhost:8080/person
+```
+Получение пользователей по маске
+```bash
+curl -X GET http://localhost:8080/person\?first_name\=A\&last_name\=Vi
+```
+Получение конкретного пользователя
+```bash
+curl -X GET http://localhost:8080/person\?login\=alex-12345
+```

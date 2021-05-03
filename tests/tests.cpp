@@ -12,17 +12,25 @@ class TestApp : public ::testing::Test {
 protected:
     TestApp() {
         Config::get().host() = "127.0.0.1";
-        Config::get().database() = "itprojects_labs_test";
-        Config::get().port() = "3306";
+        Config::get().database() = "sql_test";
+        Config::get().port() = "6043";
         Config::get().login() = "test";
         Config::get().password() = "pzjqUkMnc7vfNHET";
     }
     ~TestApp() {
-        Poco::Data::Session session = database::Database::get().create_session();
-        Statement drop(session);
-        drop << "DELETE FROM Person", now;
-        Statement reset_ai(session);
-        reset_ai << "ALTER TABLE Person AUTO_INCREMENT = 1", now;
+	    for(int i =0; i < 3; i++){
+		Poco::Data::Session session = database::Database::get().create_session();
+		Statement drop(session);
+		std::string sql_request = "DELETE FROM Person"; 
+		sql_request += " -- sharding:"; 
+		sql_request += std::to_string(i);
+		drop << sql_request, now;
+		Statement reset_ai(session);
+		sql_request = "ALTER TABLE Person AUTO_INCREMENT = 1" ; 
+		sql_request += " -- sharding:"; 
+		sql_request += std::to_string(i);
+		reset_ai << sql_request, now;
+	     }
     }
      void SetUp() {}
      void TearDown() {}
@@ -40,19 +48,20 @@ TEST_F(TestApp, TestPerson) {
 
     testing::internal::CaptureStdout();
     person.save_to_mysql();
-    ASSERT_EQ(testing::internal::GetCapturedStdout(), "inserted:1\n");
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "INSERT INTO Person (login, first_name, last_name, age) VALUES(?, ?, ?, ?) -- sharding:0\n");
 
     person.login() = "alex-12345_2";
     person.first_name() = "Alexey";
     testing::internal::CaptureStdout();
     person.save_to_mysql();
-    ASSERT_EQ(testing::internal::GetCapturedStdout(), "inserted:2\n");
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "INSERT INTO Person (login, first_name, last_name, age) VALUES(?, ?, ?, ?) -- sharding:1\n");
     person.login() = "alex";
     person.last_name() = "Vinn";
     testing::internal::CaptureStdout();
     person.save_to_mysql();
-    ASSERT_EQ(testing::internal::GetCapturedStdout(), "inserted:3\n");
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "INSERT INTO Person (login, first_name, last_name, age) VALUES(?, ?, ?, ?) -- sharding:0\n");
 
+   
     database::Person result = database::Person::read_by_login("alex-12345");
     ASSERT_EQ(result.get_first_name(), "Alex");
     ASSERT_EQ(result.get_last_name(), "Vinnikov");

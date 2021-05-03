@@ -13,6 +13,7 @@ namespace database{
             Database();
         public:
             static Database& get();
+            static std::string sharding_hint(std::string key, size_t max_shards);
             Poco::Data::Session create_session();
     };
 }

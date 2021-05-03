@@ -68,3 +68,8 @@ include(CPack)
 
 enable_testing()
 add_test(gtests gtests)
+
+add_executable(gen_data shard_gen_data.cpp)
+target_compile_options(gen_data PRIVATE -Wall -Wextra -pedantic -Werror )
+set_target_properties(gen_data PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(gen_data PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
