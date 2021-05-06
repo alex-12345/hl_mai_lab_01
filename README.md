@@ -149,4 +149,3 @@ $ curl -X GET http://localhost:8080/person\?first_name\=A\&last_name\=Vi
 ```bash
 $ curl -X GET http://localhost:8080/person\?login\=alex-12345
 ```
-Источник: https://5-ege.ru/proverit-orfografiyu-onlajn/
