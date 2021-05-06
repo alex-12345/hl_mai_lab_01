@@ -33,6 +33,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[])
             Config::get().password() = vm["password"].as<std::string>();
         if (vm.count("database"))
             Config::get().database() = vm["database"].as<std::string>();
+        if (vm.count("cache_servers"))
+            Config::get().cache_servers() = vm["cache_servers"].as<std::string>();
         if (vm.count("queue"))
             Config::get().queue_host() = vm["queue"].as<std::string>();
         if (vm.count("topic"))
@@ -97,6 +99,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[])
                     std::cout << msg.get_payload() << std::endl;
                     database::Person p = database::Person::fromJSON(payload);
                     p.save_to_mysql();
+                    p.save_to_cache();
 
                     // Now commit the message
                     consumer.commit(msg);

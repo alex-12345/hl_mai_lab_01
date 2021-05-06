@@ -199,7 +199,7 @@ public:
                                 {
                                     person.send_to_queue();
 //                                    person.save_to_mysql();
-                                    person.save_to_cache();
+//                                    person.save_to_cache();
                                     ostr << "{ \"result\": true }";
                                     return;
                                 }
