@@ -114,12 +114,12 @@ public:
                     try
                     {
                         database::Person result = database::Person::read_from_cache_by_login(login);
-//                        printf("cache hit\n");
                         Poco::JSON::Stringifier::stringify(result.toJSON(), ostr);
                         return;
                     }
                     catch (...)
                     {
+                        printf("cache miss\n");
                     }
                 }
                 try {
@@ -197,7 +197,8 @@ public:
                             {
                                 try
                                 {
-                                    person.save_to_mysql();
+                                    person.send_to_queue();
+//                                    person.save_to_mysql();
                                     person.save_to_cache();
                                     ostr << "{ \"result\": true }";
                                     return;

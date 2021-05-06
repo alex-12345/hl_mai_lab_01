@@ -55,6 +55,7 @@ namespace database
             val = _cache.Get(key);
             return true;
         }catch(...){
+        std::cout << "dsfsd" << std::endl;
             throw std::logic_error("key not found in cache");
         }
     }

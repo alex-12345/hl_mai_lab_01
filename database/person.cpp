@@ -8,6 +8,7 @@
 #include <Poco/Data/SessionFactory.h>
 #include <Poco/JSON/Parser.h>
 #include <Poco/Dynamic/Var.h>
+#include <cppkafka/cppkafka.h>
 
 #include <sstream>
 #include <exception>
@@ -240,6 +241,19 @@ namespace database
             std::cout << "statement:" << e.what() << std::endl;
             throw;
         }
+    }
+
+    void Person::send_to_queue()
+    {
+        cppkafka::Configuration config = {
+                {"metadata.broker.list", Config::get().get_queue_host()}};
+
+        cppkafka::Producer producer(config);
+        std::stringstream ss;
+        Poco::JSON::Stringifier::stringify(toJSON(), ss);
+        std::string message = ss.str();
+        producer.produce(cppkafka::MessageBuilder(Config::get().get_queue_topic()).partition(0).payload(message));
+        producer.flush();
     }
 
     void Person::save_to_mysql()

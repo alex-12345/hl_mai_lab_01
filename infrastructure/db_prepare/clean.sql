@@ -1,10 +1,19 @@
 use sql_test;
-DROP TABLE IF EXISTS `Person`
+DELETE FROM `Person`
 -- sharding:0
 ;
-DROP TABLE IF EXISTS `Person`
+ALTER TABLE `Person` AUTO_INCREMENT = 1
+-- sharding:0
+;
+DELETE FROM `Person`
 -- sharding:1
 ;
-DROP TABLE IF EXISTS `Person`
+ALTER TABLE `Person` AUTO_INCREMENT = 1
+-- sharding:1
+;
+DELETE FROM `Person`
+-- sharding:2
+;
+ALTER TABLE `Person` AUTO_INCREMENT = 1
 -- sharding:2
 ;
